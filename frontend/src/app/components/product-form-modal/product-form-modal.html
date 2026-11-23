@@ -1,0 +1,52 @@
+<div class="backdrop" (click)="!saving() && closed.emit()"></div>
+
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <header class="modal__header">
+    <h2 id="modal-title">{{ isEdit ? 'Editar producto' : 'Nuevo producto' }}</h2>
+    <button type="button" class="icon-btn" aria-label="Cerrar" (click)="closed.emit()" [disabled]="saving()">✕</button>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div class="modal__body">
+      <div class="field">
+        <label for="name">Nombre *</label>
+        <input id="name" formControlName="name" maxlength="80" [class.invalid]="showError('name')" />
+        @if (showError('name')) { <small class="field__error">El nombre es obligatorio</small> }
+      </div>
+
+      <div class="field">
+        <label for="description">Descripción</label>
+        <textarea id="description" rows="3" formControlName="description" maxlength="200"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="category">Categoría *</label>
+        <select id="category" formControlName="category" [class.invalid]="showError('category')">
+          <option value="" disabled>Selecciona una categoría</option>
+          @for (c of categories; track c) { <option [value]="c">{{ c }}</option> }
+        </select>
+        @if (showError('category')) { <small class="field__error">Selecciona una categoría</small> }
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="price">Precio *</label>
+          <input id="price" type="number" min="0" step="1" formControlName="price" [class.invalid]="showError('price')" />
+          @if (showError('price')) { <small class="field__error">Debe ser 0 o mayor</small> }
+        </div>
+        <div class="field">
+          <label for="stock">Stock *</label>
+          <input id="stock" type="number" min="0" step="1" formControlName="stock" [class.invalid]="showError('stock')" />
+          @if (showError('stock')) { <small class="field__error">Entero, 0 o mayor</small> }
+        </div>
+      </div>
+    </div>
+
+    <footer class="modal__footer">
+      <button type="button" class="btn btn--ghost" (click)="closed.emit()" [disabled]="saving()">Cancelar</button>
+      <button type="submit" class="btn btn--primary" [disabled]="saving()">
+        @if (saving()) { <span class="spinner"></span> Guardando… } @else { {{ isEdit ? 'Guardar cambios' : 'Crear producto' }} }
+      </button>
+    </footer>
+  </form>
+</div>

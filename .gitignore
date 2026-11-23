@@ -1,0 +1,12 @@
+# Sistema / editores
+.DS_Store
+Thumbs.db
+
+# Configuración local de Claude Code
+.claude/settings.local.json
+
+# Variables de entorno
+.env
+
+# Instrucciones locales de Claude Code
+CLAUDE.md

@@ -1,0 +1,156 @@
+<header class="topbar">
+  <div class="topbar__inner">
+    <div class="brand">
+      <span class="brand__logo" aria-hidden="true">▦</span>
+      <span>CRUD Productos</span>
+    </div>
+    <div class="topbar__user">
+      <button type="button" class="theme-toggle" role="switch" (click)="theme.toggle()"
+              [attr.aria-checked]="theme.isDark()"
+              [attr.aria-label]="theme.isDark() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+              [title]="theme.isDark() ? 'Modo claro' : 'Modo oscuro'">
+        @if (theme.isDark()) {
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+          </svg>
+        } @else {
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        }
+      </button>
+      <span class="avatar" aria-hidden="true">{{ auth.user()?.name?.charAt(0) }}</span>
+      <span class="topbar__name">{{ auth.user()?.name }}</span>
+      <button type="button" class="btn btn--ghost btn--sm" (click)="logout()">Cerrar sesión</button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <div class="page-header">
+    <div>
+      <h1>Productos</h1>
+      <p>Administra el inventario: crea, edita y elimina registros.</p>
+    </div>
+    <button type="button" class="btn btn--primary" (click)="openCreate()">+ Nuevo producto</button>
+  </div>
+
+  <section class="stats">
+    <article class="stat">
+      <span class="stat__label">Productos</span>
+      <strong class="stat__value">{{ stats().total }}</strong>
+    </article>
+    <article class="stat">
+      <span class="stat__label">Unidades en stock</span>
+      <strong class="stat__value">{{ stats().units }}</strong>
+    </article>
+    <article class="stat">
+      <span class="stat__label">Valor inventario</span>
+      <strong class="stat__value">{{ stats().value | currency: 'CLP' : 'symbol-narrow' : '1.0-0' }}</strong>
+    </article>
+    <article class="stat">
+      <span class="stat__label">Sin stock</span>
+      <strong class="stat__value" [class.text-danger]="stats().outOfStock > 0">{{ stats().outOfStock }}</strong>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="toolbar">
+      <input type="search" class="toolbar__search" placeholder="Buscar por nombre o descripción…"
+             [value]="search()" (input)="onSearch($event)" aria-label="Buscar" />
+      <select class="toolbar__select" [value]="categoryFilter()" (change)="onCategoryChange($event)"
+              aria-label="Filtrar por categoría">
+        <option value="">Todas las categorías</option>
+        @for (c of categories; track c) {
+          <option [value]="c">{{ c }}</option>
+        }
+      </select>
+    </div>
+
+    @if (loading()) {
+      <div class="state"><span class="spinner spinner--dark"></span> Cargando productos…</div>
+    } @else if (filtered().length === 0) {
+      <div class="state">
+        @if (products().length === 0) {
+          <p>No hay productos todavía.</p>
+          <button type="button" class="btn btn--primary btn--sm" (click)="openCreate()">Crear el primero</button>
+        } @else {
+          <p>No hay resultados para los filtros aplicados.</p>
+          <button type="button" class="btn btn--ghost btn--sm" (click)="clearFilters()">Limpiar filtros</button>
+        }
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Producto</th>
+              <th>Categoría</th>
+              <th class="num">Precio</th>
+              <th class="num">Stock</th>
+              <th>Creado</th>
+              <th class="actions-col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of filtered(); track p.id) {
+              <tr>
+                <td class="muted">{{ p.id }}</td>
+                <td>
+                  <div class="product-name">{{ p.name }}</div>
+                  @if (p.description) {
+                    <div class="product-desc">{{ p.description }}</div>
+                  }
+                </td>
+                <td><span class="badge">{{ p.category }}</span></td>
+                <td class="num">{{ p.price | currency: 'CLP' : 'symbol-narrow' : '1.0-0' }}</td>
+                <td class="num">
+                  <span class="stock" [class.stock--out]="p.stock === 0" [class.stock--low]="p.stock > 0 && p.stock < 6">
+                    {{ p.stock }}
+                  </span>
+                </td>
+                <td class="muted">{{ p.createdAt | date: 'dd/MM/yyyy' }}</td>
+                <td class="actions-col">
+                  <div class="actions">
+                    <button type="button" class="btn btn--ghost btn--sm" (click)="openEdit(p)"
+                            [attr.aria-label]="'Editar ' + p.name">Editar</button>
+                    <button type="button" class="btn btn--danger-ghost btn--sm" (click)="askDelete(p)"
+                            [attr.aria-label]="'Eliminar ' + p.name">Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="table-footer">Mostrando {{ filtered().length }} de {{ products().length }} productos</p>
+    }
+  </section>
+</main>
+
+@if (modalOpen()) {
+  <app-product-form-modal
+    [product]="editing()"
+    [saving]="saving()"
+    (save)="saveProduct($event)"
+    (closed)="closeModal()" />
+}
+
+@if (toDelete(); as p) {
+  <app-confirm-dialog
+    title="Eliminar producto"
+    [message]="'Se eliminará «' + p.name + '». Esta acción no se puede deshacer.'"
+    [loading]="deleting()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="toDelete.set(null)" />
+}
+
+<div class="toasts" aria-live="polite">
+  @for (t of toasts(); track t.id) {
+    <div class="toast" [class.toast--error]="t.type === 'error'">{{ t.message }}</div>
+  }
+</div>
